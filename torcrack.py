@@ -1,42 +1,50 @@
 #!/usr/bin/env python3
 
-#norksec torcrack - (c) 2016 no rights reserved
+#torcrack.py - (c) 2016 NoRKSEC - no rights reserved
 
+import atexit
+import optparse
+import os
+try:
+	import paramiko
+except:
+	print(' [=] Error: requires Paramiko (pip3 install paramiko)')
+	os._exit(1)
 try:
 	from pyfiglet import Figlet
 except:
 	print(' [-] Error: requires PyFiglet (pip3 install pyfiglet)')
 	os._exit(1)
-import optparse
-import os
-import sys
 try:
-	import paramiko
+	import requests
 except:
-	print(' [-] Error: requires Paramiko (pip3 install paramiko)')
+	print(' [-] Error: it appears python requests is not installed. (apt-get install python3-requests)')
 	os._exit(1)
 import socket
-import atexit
-import requests
 try:
 	import socks
 except:
 	print(' [-] Error: requires socks/SocksiPy/PySocks (pip3 install PySocks)')
 	os._exit(1)
+import sys
 from threading import Thread
-from queue import Queue
 from time import sleep
+from queue import Queue
+
 
 def cls():
 	os.system('cls' if os.name=='nt' else 'clear')
+
 
 def intro():
 	fa = Figlet(font='graffiti')
 	print(fa.renderText('NoRKSEC'))
 	print('TorCrack v1.0 - (c) 2016 NoRKSEC - no rights reserved\n\n')
 
+
 def exit_handler():
 	print('\n [~] Exiting...\n')
+
 
 def ssh_connect(password, code = 0):
 	global running
@@ -59,6 +67,7 @@ def ssh_connect(password, code = 0):
 	exit_handler()
 	os._exit(1)
 
+
 def is_valid_ipv4(address):
 	try:
 		socket.inet_pton(socket.AF_INET, address)
@@ -71,6 +80,7 @@ def is_valid_ipv4(address):
 	except socket.error:
 		return False
 	return True
+
 
 def main():
 	if not os.path.exists("./.logs"):
@@ -158,6 +168,7 @@ def main():
 	print(' [+] Reached end of dictionary file, waiting for threads to complete...')
 	sleep(running*2) #give the script 2 seconds per running thread to finish pulling banners and checking them before declaring no password found
 	print(' [+] Password not found; Shutting down.')
+
 
 if __name__ == '__main__':
 	cls()
