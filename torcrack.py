@@ -3,7 +3,7 @@
 #torcrack.py - (c) 2016 NoRKSEC - no rights reserved
 
 import atexit
-import optparse
+import argparse
 import os
 try:
 	import paramiko
@@ -88,46 +88,35 @@ def main():
 	global running
 	running = 0
 	atexit.register(exit_handler)
-	parser = optparse.OptionParser('%prog -t <target> -p <target port> -u <username> -d <dictionary/pass list> -P tor port (optional, default: 9050) -m max threads (optional, default: 4, maximum: 10)')
-	parser.add_option('-m', dest='maxThreads', type='int', help='specify maximum number of threads (optional: default 4, maximum 10)')
-	parser.add_option('-P', dest='torPort', type='int', help='specify Tor port (optional: default 9050)')
-	parser.add_option('-t', dest='tgtHost', type='string', help='specify target (required)')
-	parser.add_option('-u', dest='tgtUser', type='string', help='specify username (required')
-	parser.add_option('-d', dest='dictFile', type='string', help='specify dictionary file/password list (required)')
-	parser.add_option('-p', dest='tgtPort', type='int', help="specify target port (required)")
-	(options, args) = parser.parse_args()
+	parser = argparse.ArgumentParser(prog='torcrack.py', description='Tor-enabled SSH brute force dictionary attack.')
+	parser.add_argument('tgtHost', type=str, help='target machine')
+	parser.add_argument('-t', '--tgtPort', type=int, help='port to attack on target machine (optional: default 22)', default=22)
+	parser.add_argument('tgtUser', type=str, help='target username')
+	parser.add_argument('dictFile', type=str, help='dictionary file or password list to use')
+	parser.add_argument('-m', '--max-threads', type=int, help='maximum number of threads (optional: default is 4,  maximum is 10)', default=4)
+	parser.add_argument('-P', '--torPort', type=int, help='local Tor port (optional: default 9050)', default=9050)
+	args = parser.parse_args()
 	global tgtHost, tgtUser, dictFile, tgtPort, torPort, maxThreads
-	if (options.tgtHost == None) | (options.tgtUser == None) | (options.dictFile == None) | (options.tgtPort == None):
-		print('TorCrack.py - a simple Tor enabled SSH brute force attack.\n\n')
-		print(parser.error('Invalid Arguments.'))
-		exit(0)
+	tgtUser = options.tgtUser
+	dictFile = options.dictFile
+	tgtPort = options.tgtPort
+	if is_valid_ipv4(options.tgtHost) == True:
+		tgtHost = options.tgtHost
 	else:
-		tgtUser = options.tgtUser
-		dictFile = options.dictFile
-		tgtPort = options.tgtPort
-		if is_valid_ipv4(options.tgtHost) == True:
-			tgtHost = options.tgtHost
-		else:
-			try:
-				tgtHost = gethostbyname(options.tgtHost)
-			except:
-				print(" [-] Cannot resolve '%s': Unknown host\n" % options.tgtHost)
-				exit(0)
-	if (options.torPort == None):
-		torPort = 9050
-	else:
-		torPort = options.torPort
-	if (options.maxThreads == None):
+		try:
+			tgtHost = gethostbyname(options.tgtHost)
+		except:
+			print(" [-] Cannot resolve '%s': Unknown host\n" % options.tgtHost)
+			exit(0)
+	torPort = options.torPort
+	if (options.maxThreads > 10):
+		print(' [-] Maximum number of threads can not exceed 10.')
+		maxThreads = 10
+	elif (options.maxThreads < 1):
+		print(' [-] Maximum number of threads must be greater than 0 (come on, now.)')
 		maxThreads = 4
 	else:
-		if (options.maxThreads > 10):
-			print(' [-] Maximum number of threads can not exceed 10.')
-			maxThreads = 10
-		elif (options.maxThreads < 1):
-			print(' [-] Maximum number of threads must be greater than 0 (come on, now.)')
-			maxThreads = 4
-		else:
-			maxThreads = options.maxThreads
+		maxThreads = options.maxThreads
 	print(' [+] Max Threads set to ' + str(maxThreads))
 	print(' [+] ' + options.tgtHost + ' resolved to ' + str(tgtHost))
 	print(' [+] Target locked: ' + str(tgtHost) + ':' + str(tgtPort))
