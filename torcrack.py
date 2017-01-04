@@ -53,24 +53,10 @@ def exit_handler():
 
 
 def ssh_connect(password, code = 0):
-<<<<<<< HEAD
-<<<<<<< 3701001e1d5ac45eb973cf65791c1105c8440616
-<<<<<<< 0ae3ce11cd6e963a8714a906dff61026d73ee413
-=======
->>>>>>> 334f25f0a3f13c39154df947e649a59f9fea26d4
 	global verbose
 	if (password=="^^^break^^^"):
 		raise notfound
 		sys.exit(1)
-<<<<<<< HEAD
-=======
-	global running, verbose
->>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
-=======
-	global running, verbose
->>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
-=======
->>>>>>> 334f25f0a3f13c39154df947e649a59f9fea26d4
 	paramiko.util.log_to_file(".logs/paramiko.log")
 	ssh = paramiko.SSHClient()
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -123,32 +109,11 @@ def main():
 	parser.add_argument('-t', '--tgtPort', type=int, help='port to attack on target machine (optional: default 22)', default=22)
 	parser.add_argument('tgtUser', type=str, help='target username')
 	parser.add_argument('dictFile', type=str, help='dictionary file or password list to use')
-<<<<<<< HEAD
-<<<<<<< 3701001e1d5ac45eb973cf65791c1105c8440616
-<<<<<<< 0ae3ce11cd6e963a8714a906dff61026d73ee413
-=======
->>>>>>> 334f25f0a3f13c39154df947e649a59f9fea26d4
 	parser.add_argument('-m', '--maxThreads', type=int, help='maximum number of threads (optional: default is 4,  maximum is 16)', default=4)
 	parser.add_argument('-P', '--torPort', type=int, help='local Tor port (optional: default 9050)', default=9050)
 	parser.add_argument('-v', '--verbose', action="store_true", help='display status at each step')
 	args = parser.parse_args()
 	global tgtHost, tgtUser, dictFile, tgtPort, torPort, maxThreads, verbose, worker
-<<<<<<< HEAD
-=======
-=======
->>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
-	parser.add_argument('-m', '--maxThreads', type=int, help='maximum number of threads (optional: default is 4,  maximum is 10)', default=4)
-	parser.add_argument('-P', '--torPort', type=int, help='local Tor port (optional: default 9050)', default=9050)
-	parser.add_argument('-v', '--verbose', action="store_true", help='display status at each step')
-	args = parser.parse_args()
-	global tgtHost, tgtUser, dictFile, tgtPort, torPort, maxThreads, verbose, running
-	running = 0
-<<<<<<< 3701001e1d5ac45eb973cf65791c1105c8440616
->>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
-=======
->>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
-=======
->>>>>>> 334f25f0a3f13c39154df947e649a59f9fea26d4
 	tgtUser = args.tgtUser
 	dictFile = args.dictFile
 	tgtPort = args.tgtPort
@@ -162,27 +127,9 @@ def main():
 			print(" [-] Cannot resolve '%s': Unknown host\n" % args.tgtHost)
 			exit(0)
 	torPort = args.torPort
-<<<<<<< HEAD
-<<<<<<< 3701001e1d5ac45eb973cf65791c1105c8440616
-<<<<<<< 0ae3ce11cd6e963a8714a906dff61026d73ee413
 	if (args.maxThreads > 16):
 		print(' [-] Maximum number of threads can not exceed 16.')
 		maxThreads = 16
-=======
-	if (args.maxThreads > 10):
-		print(' [-] Maximum number of threads can not exceed 10.')
-		maxThreads = 10
->>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
-=======
-	if (args.maxThreads > 10):
-		print(' [-] Maximum number of threads can not exceed 10.')
-		maxThreads = 10
->>>>>>> Switched from optparse to argparse, cleaned up command line options, added verbose option
-=======
-	if (args.maxThreads > 16):
-		print(' [-] Maximum number of threads can not exceed 16.')
-		maxThreads = 16
->>>>>>> 334f25f0a3f13c39154df947e649a59f9fea26d4
 	elif (args.maxThreads < 1):
 		print(' [-] Maximum number of threads must be greater than 0 (come on, now.)')
 		maxThreads = 4
