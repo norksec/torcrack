@@ -2,19 +2,15 @@
 
 #torcrack.py - (c) 2016 NoRKSEC - no rights reserved
 
-import atexit
 import argparse
+import atexit
 import multiprocessing
 import os
+
 try:
 	import paramiko
 except:
 	print(' [=] Error: requires Paramiko (pip3 install paramiko)')
-	os._exit(1)
-try:
-	from pyfiglet import Figlet
-except:
-	print(' [-] Error: requires PyFiglet (pip3 install pyfiglet)')
 	os._exit(1)
 try:
 	import requests
@@ -43,8 +39,12 @@ def cls():
 
 
 def intro():
-	fa = Figlet(font='graffiti')
-	print(fa.renderText('NoRKSEC'))
+	print('''	 _______        __________ ____  __.  _____________________________
+ \      \   ____\______   \    |/ _| /   _____/\_   _____/\_   ___ \
+ /   |   \ /  _ \|       _/      <   \_____  \  |    __)_ /    \  \/
+/    |    (  <_> )    |   \    |  \  /        \ |        \\     \____
+\____|__  /\____/|____|_  /____|__ \/_______  //_______  / \______  /
+        \/              \/        \/        \/         \/         \/\n''')
 	print('TorCrack v1.0 - (c) 2016 NoRKSEC - no rights reserved\n\n')
 
 

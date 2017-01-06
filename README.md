@@ -6,8 +6,6 @@ A simple Tor enabled, multi-process SSH Brute Force dictionary attack in Python3
 
 argparse
 
-PyFiglet
-
 PySocks
 
 Paramiko
@@ -18,7 +16,7 @@ tor
 
 git clone https://github.com/norksec/torcrack.git
 
-pip3 install pyfiglet pysocks paramiko argparse
+python3 setup.py
 
 apt-get install -y tor
 
