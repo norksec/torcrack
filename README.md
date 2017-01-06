@@ -1,6 +1,6 @@
 # torcrack
 
-A simple Tor enabled, multi-process SSH Brute Force dictionary attack in Python3.
+A simple Tor enabled, multi-process SSH dictionary attack in Python3.
 
 # requirements
 
@@ -16,7 +16,7 @@ tor
 
 git clone https://github.com/norksec/torcrack.git
 
-python3 setup.py
+pip3 install argparse pysocks paramiko
 
 apt-get install -y tor
 
@@ -29,7 +29,5 @@ service tor restart
 python3 torcrack.py -h for commands
 
 # to do:
-
-remove pyfiglet
 
 try to reduce SSH Banner errors with a higher number of parallel processes
